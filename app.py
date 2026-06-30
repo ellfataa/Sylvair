@@ -3,83 +3,112 @@ import pandas as pd
 import joblib
 import os
 
-# ==========================================
-# 1. KONFIGURASI LAYOUT (FULL WIDTH & SIDEBAR EXPANDED)
-# ==========================================
 st.set_page_config(
-    page_title="Sylvair", 
-    page_icon="🍃", 
+    page_title="Sylvair - Dashboard", 
+    page_icon="logo-sylvair.webp", 
     layout="wide", 
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS untuk estetika modern minimalis & DYNAMIC CARDS
+# Injeksi CSS
 st.markdown("""
     <style>
-    /* Menyembunyikan elemen default Streamlit */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    
-    /* Mengoptimalkan padding halaman */
-    .block-container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
+    /* Mengubah tema utama menjadi latar belakang gelap formal */
+    .stApp {
+        background-color: #0b0f19;
+        color: #f1f5f9;
+        font-family: 'Inter', -apple-system, sans-serif;
     }
     
-    /* Styling tombol submisi */
+    /* Mengatur estetika panel Sidebar Gelap */
+    [data-testid="stSidebar"] {
+        background-color: #111827 !important;
+        border-right: 1px solid #1f2937 !important;
+    }
+    
+    /* Memastikan teks heading di sidebar berwarna terang */
+    [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3, [data-testid="stSidebar"] p {
+        color: #f1f5f9 !important;
+    }
+    
+    /* Optimalisasi ruang padding utama */
+    .main .block-container {
+        padding-top: 3rem;
+        padding-bottom: 3rem;
+        padding-left: 5rem;
+        padding-right: 5rem;
+    }
+    
+    /* Memaksa warna label selectbox teks menjadi putih/terang */
+    label, .stMarkdown p {
+        color: #cbd5e1 !important;
+    }
+    
+    /* Tombol Eksekusi Premium Blue */
     .stButton>button {
         width: 100%;
-        border-radius: 8px;
-        height: 3rem;
+        border-radius: 6px;
+        height: 3.4rem;
+        font-size: 1.05rem;
         font-weight: 600;
-        margin-top: 1rem;
-        border: none;
-        transition: all 0.3s ease-in-out;
+        background-color: #0284c7 !important;
+        color: #ffffff !important;
+        border: none !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+        transition: background-color 0.2s ease;
+    }
+    .stButton>button:hover {
+        background-color: #0369a1 !important;
+        color: #ffffff !important;
     }
     
-    /* --- CSS UNTUK KARTU HASIL (DYNAMIC CARDS) --- */
-    .result-card {
-        padding: 25px;
-        border-radius: 12px;
-        margin-top: 20px;
-        color: white;
-        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-        animation: fadeIn 0.8s ease-in-out;
+    /* Pembungkus Formulir Elegan dalam Mode Gelap */
+    div[data-testid="stForm"] {
+        border: 1px solid #1f2937 !important;
+        border-radius: 8px !important;
+        padding: 2.5rem !important;
+        background-color: #1f2937 !important;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3) !important;
     }
     
-    .card-danger {
-        background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-        border-left: 8px solid #922b21;
-    }
-    
-    .card-success {
-        background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
-        border-left: 8px solid #1e8449;
-    }
-    
-    .score-box {
-        background-color: rgba(255, 255, 255, 0.2);
-        padding: 10px 20px;
+    /* --- KARTU DIAGNOSTIK ELEGAN UNTUK TEMA GELAP --- */
+    .report-card {
+        padding: 30px;
         border-radius: 8px;
-        display: inline-block;
-        font-size: 1.2rem;
-        font-weight: 700;
-        margin-top: 15px;
-        backdrop-filter: blur(5px);
+        margin-top: 25px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.05);
     }
     
-    /* Efek animasi kemunculan card */
+    .report-danger {
+        background: linear-gradient(135deg, #7f1d1d 0%, #450a0a 100%);
+        border-left: 8px solid #f87171;
+        color: #fca5a5;
+    }
+    
+    .report-success {
+        background: linear-gradient(135deg, #064e3b 0%, #022c22 100%);
+        border-left: 8px solid #4ade80;
+        color: #86efac;
+    }
+    
+    .metric-container {
+        background-color: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 12px 20px;
+        border-radius: 6px;
+        display: inline-block;
+        margin-top: 20px;
+        font-size: 1.1rem;
+    }
+    
     @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
+        from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
     }
     </style>
 """, unsafe_allow_html=True)
 
-# ==========================================
-# 2. INISIALISASI & LOAD RESOURCE
-# ==========================================
 @st.cache_resource
 def load_resources():
     if not os.path.exists('models/sylvair_best_model.pkl'):
@@ -95,113 +124,87 @@ def load_resources():
 with st.spinner("Menghubungkan ke engine Sylvair..."):
     model, encoders, feature_names = load_resources()
 
-# ==========================================
-# 3. STRUKTUR SIDEBAR (LOGO & BRANDING)
-# ==========================================
-st.sidebar.markdown("<h2 style='text-align: center; color: #2E86C1; margin-bottom: 10px;'>🍃 Sylvair</h2>", unsafe_allow_html=True)
+st.sidebar.markdown("<h2 style='text-align: center; color: #38bdf8;'>Sistem Analisis Risiko Penyakit Paru-Paru</h2>", unsafe_allow_html=True)
 
-logo_path = "Gemini_Generated_Image_3enx763enx763enx.png"
+logo_path = "logo-sylvair.webp"
 if os.path.exists(logo_path):
     st.sidebar.image(logo_path, width='stretch')
 else:
-    st.sidebar.caption("💡 Tempatkan file logo Anda di direktori utama proyek.")
+    st.sidebar.caption("Tempatkan file 'logo-sylvair.webp' di direktori utama proyek.")
 
-st.sidebar.divider()
-
-st.sidebar.markdown("### 🧠 Engine Status")
-st.sidebar.info(
-    "**Model:** Random Forest Classifier\n\n"
-    "**Akurasi Sistem:** 94.44%\n\n"
-    "**Metode Tuning:** RandomizedSearchCV"
-)
-st.sidebar.caption("Sylvair Decision Support System v1.0")
-
-# ==========================================
-# 4. MAIN CONTENT (FORMULIR MULTI-KOLOM)
-# ==========================================
-st.title("🫁 Dasbor Analisis Risiko Paru-Paru")
-st.markdown("Sistem berbasis kecerdasan buatan untuk deteksi dini prediktif berdasarkan profil klinis dan aktivitas harian.")
+#FORMULIR EVALUASI
+st.markdown("<h1 style='color: #f8fafc; font-weight: 800; margin-bottom: 5px; margin-top: 0px;'>Dashboard Analisis Risiko Paru-Paru</h1>", unsafe_allow_html=True)
+st.markdown("<p style='color: #94a3b8; font-size: 1.1rem; margin-bottom: 0px;'>Sistem evaluasi prediktif klinis berbasis kecerdasan buatan untuk deteksi dini parameter kesehatan harian menggunakan metode Random Forest dan XGBoost.</p>", unsafe_allow_html=True)
 st.divider()
 
-st.subheader("📋 Form Data Pasien")
+st.markdown("<h4 style='color: #e2e8f0; margin-bottom: 15px;'>Formulir Penginputan Parameter Pasien</h4>", unsafe_allow_html=True)
 
-with st.form(key='sylvair_wide_form'):
+with st.form(key='sylvair_dark_form'):
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        usia = st.selectbox("Usia Pasien", ['Tua', 'Muda'])
+        usia = st.selectbox("Klasifikasi Usia Pasien", ['Tua', 'Muda'])
         jk = st.selectbox("Jenis Kelamin", ['Pria', 'Wanita'])
-        merokok = st.selectbox("Status Merokok", ['Aktif', 'Pasif'])
+        merokok = st.selectbox("Paparan Asap/Status Merokok", ['Aktif', 'Pasif'])
         
     with col2:
-        bekerja = st.selectbox("Status Bekerja", ['Ya', 'Tidak'])
-        rt = st.selectbox("Aktivitas Rumah Tangga", ['Ya', 'Tidak'])
-        begadang = st.selectbox("Aktivitas Begadang", ['Ya', 'Tidak'])
+        bekerja = st.selectbox("Status Aktivitas Pekerjaan", ['Ya', 'Tidak'])
+        rt = st.selectbox("Aktivitas Urusan Rumah Tangga", ['Ya', 'Tidak'])
+        begadang = st.selectbox("Kebiasaan/Aktivitas Begadang", ['Ya', 'Tidak'])
         
     with col3:
         olahraga = st.selectbox("Intensitas Olahraga", ['Sering', 'Jarang'])
-        asuransi = st.selectbox("Kepemilikan Asuransi", ['Ada', 'Tidak'])
-        penyakit = st.selectbox("Penyakit Bawaan", ['Ada', 'Tidak'])
+        asuransi = st.selectbox("Kepemilikan Jaminan Asuransi", ['Ada', 'Tidak'])
+        penyakit = st.selectbox("Riwayat Komorbid/Penyakit Bawaan", ['Ada', 'Tidak'])
         
-    submit_button = st.form_submit_button(label="⚡ Jalankan Diagnostik Prediktif", type="primary")
+    submit_button = st.form_submit_button(label="⚡ Jalankan Diagnostik Prediktif")
 
-# ==========================================
-# 5. PROSES EVALUASI & OUTPUT HASIL CARDS
-# ==========================================
 if submit_button:
-    # Ekstraksi input ke DataFrame
+    # Transformasi array ke DataFrame
     input_df = pd.DataFrame([[usia, jk, merokok, bekerja, rt, begadang, olahraga, asuransi, penyakit]], 
                               columns=feature_names)
     
-    # Transformasi nilai input menggunakan encoder yang tersimpan
+    # Label encoding input secara sekuensial
     for col in input_df.columns:
         input_df[col] = encoders[col].transform(input_df[col])
         
-    # Inferensi klasifikasi
-    pred_class = model.predict(input_df)[0]  # Mengambil nilai kelas prediksi (0 atau 1)
-    pred_proba = model.predict_proba(input_df)[0] # Mengambil array probabilitas untuk kelas 0 dan 1
+    # Inferensi model
+    pred_class = model.predict(input_df)[0]  
+    pred_proba = model.predict_proba(input_df)[0] 
     
-    # Menerjemahkan angka kelas kembali ke label ('Ya' atau 'Tidak')
+    # Dekode label balik
     result_label = encoders['Hasil'].inverse_transform([pred_class])[0]
-    
-    # Mengambil persentase probabilitas untuk kelas yang TERPILIH oleh model
-    # Jika model memprediksi 0, ambil probabilitas indeks 0. Jika memprediksi 1, ambil indeks 1.
     selected_proba = pred_proba[pred_class]
     
-    # Rendering area hasil analisis
-    st.divider()
-    st.subheader("📊 Hasil Diagnostik Sylvair")
+    st.markdown("<br><h4 style='color: #e2e8f0; margin-bottom: 0px'>Hasil Penilaian Klinis</h4>", unsafe_allow_html=True)
     
-    # ----------------------------------------------------
-    # LOGIKA DYNAMIC CARDS (BERUBAH WARNA SESUAI HASIL)
-    # ----------------------------------------------------
+    # Kondisi 1: Pasien Terindikasi Risiko Tinggi (Ya)
     if result_label == 'Ya':
         card_html = f"""
-        <div class="result-card card-danger">
-            <h2 style="color: white; margin-top: 0;">⚠️ Peringatan: Terindikasi Berisiko Tinggi</h2>
-            <p style="font-size: 1.1rem; opacity: 0.9;">
-                Profil data pasien menunjukkan kecenderungan pola yang selaras dengan kelompok risiko gangguan paru-paru. Direkomendasikan untuk segera melakukan tindakan preventif atau konsultasi medis lanjutan ke dokter spesialis.
+        <div class="report-card report-danger" style="margin-top:0px">
+            <h3 style="margin-top: 0; font-weight: 700; color: #fca5a5;">⚠️ Hasil Analisis: Terindikasi Risiko Tinggi</h3>
+            <p style="font-size: 1.05rem; line-height: 1.6; color: #fca5a5; margin-bottom: 0;">
+                Berdasarkan hasil komparasi parameter gaya hidup dan riwayat kondisi komorbid, profil pasien menunjukkan kecenderungan pola yang selaras dengan kelompok riwayat penyakit paru-paru berat. Direkomendasikan untuk segera melakukan skrining penunjang klinis atau melakukan tindakan konsultasi preventif secara langsung kepada dokter spesialis.
             </p>
-            <div class="score-box">
-                🎯 Confidence Score Model: <b>{selected_proba:.2f}</b>
+            <div class="metric-container" style="color: #fca5a5; margin-bottom: 0">
+                Tingkat Keyakinan Prediksi (Confidence Score): <b>{selected_proba:.2f}</b>
             </div>
         </div>
         """
         st.markdown(card_html, unsafe_allow_html=True)
         
+    # Kondisi 2: Pasien Berada dalam Kondisi Aman (Tidak)
     else:
         card_html = f"""
-        <div class="result-card card-success">
-            <h2 style="color: white; margin-top: 0;">✅ Status: Kontrol Aman</h2>
-            <p style="font-size: 1.1rem; opacity: 0.9;">
-                Evaluasi komparatif terhadap parameter gaya hidup menunjukkan profil kesehatan pasien berada dalam kategori aman dari risiko signifikan penyakit paru-paru. Tetap pertahankan pola hidup sehat Anda!
+        <div class="report-card report-success">
+            <h3 style="margin-top: 0; font-weight: 700; color: #86efac;">✅ Hasil Analisis: Profil Kontrol Aman</h3>
+            <p style="font-size: 1.05rem; line-height: 1.6; color: #86efac; margin-bottom: 0;">
+                Evaluasi komparatif matematis terhadap parameter aktivitas harian menunjukkan bahwa kondisi fisik dan lingkungan pasien saat ini berada dalam koridor risiko rendah dari indikasi penyakit paru-paru. Tetap pelihara pola hidup sehat Anda dan lakukan olahraga secara teratur!
             </p>
-            <div class="score-box">
-                🎯 Confidence Score Model: <b>{selected_proba:.2f}</b>
+            <div class="metric-container" style="color: #86efac; margin-bottom: 0">
+                Tingkat Keyakinan Prediksi (Confidence Score): <b>{selected_proba:.2f}</b>
             </div>
         </div>
         """
         st.markdown(card_html, unsafe_allow_html=True)
-        
-        # Tambahan sedikit efek balon untuk hasil yang baik agar lebih interaktif
         st.balloons()
